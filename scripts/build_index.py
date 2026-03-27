@@ -51,13 +51,14 @@ def main() -> None:
 
     package_list = SITE_DIR / 'package-list.txt'
     package_list.write_text(
-        ''.join(f'packages/{artifact.name}\n' for artifact in artifacts),
+        ''.join(f'{artifact.name}\n' for artifact in artifacts),
         encoding='utf-8',
     )
 
     subprocess.run(
         [
             'dumb-pypi',
+            '--title=SimulAVR Python packages',
             '--package-list',
             str(package_list),
             '--output-dir',
@@ -68,47 +69,23 @@ def main() -> None:
         check=True,
     )
 
-    with open(SITE_DIR / 'index.html', 'w') as f:
-        f.write("""<!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SimulAVR Python package registry</title>
-
-<h1>SimulAVR Python package registry</h1>
-
-<p>This site hosts wheels and source distributions for this repository.</p>
-
-<p>Use it with pip like this:</p>
-
-<pre>python -m pip install --index-url /simple/ PACKAGE_NAME</pre>
-
-<p>The actual package index is here:</p>
-
-<p><a href="simple/">/simple/</a></p>
-
-<p>A generated text summary is here:</p>
-
-<p><a href="registry.txt">/registry.txt</a></p>""")
-
     root_simple = os.environ.get('GITHUB_PAGES_URL', '').rstrip('/') + '/simple/'
-    instructions_path = SITE_DIR / 'registry.txt'
-    instructions_path.write_text(
-        '\n'.join(
-            [
-                f'Index URL: {root_simple}',
-                '',
-                'Install:',
-                f'  python -m pip install --index-url {root_simple} PACKAGE_NAME',
-                '',
-                'Packages:',
-                *[f'  - {name}' for name in package_names],
-                '',
-            ]
-        ),
-        encoding='utf-8',
-    )
-
+    with open(SITE_DIR / 'index.html', 'w') as f:
+        f.write(f"""<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SimulAVR Python package registry</title>
+</head>
+<body>
+    <h1>SimulAVR Python package registry</h1>
+    <p>This site hosts wheels and source distributions for this repository.</p>
+    <p>Use it with pip like this:</p>
+    <pre>python -m pip install --index-url {root_simple} PACKAGE_NAME</pre>
+    <p>Browse available packages <a href="simple/">here</a>.</p>
+</body>
+""")
 
 if __name__ == '__main__':
     main()
