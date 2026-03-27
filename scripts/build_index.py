@@ -12,7 +12,6 @@ from packaging.utils import canonicalize_name, parse_sdist_filename, parse_wheel
 DIST_DIR = Path('dist')
 SITE_DIR = Path('site')
 PACKAGES_DIR = SITE_DIR / 'packages'
-SIMPLE_DIR = SITE_DIR / 'simple'
 
 
 def detect_package_name(filename: str) -> str:
@@ -41,8 +40,8 @@ def main() -> None:
     if SITE_DIR.exists():
         shutil.rmtree(SITE_DIR)
 
+    SITE_DIR.mkdir(parents=True)
     PACKAGES_DIR.mkdir(parents=True)
-    SIMPLE_DIR.mkdir(parents=True)
 
     for artifact in artifacts:
         shutil.copy2(artifact, PACKAGES_DIR / artifact.name)
@@ -62,30 +61,12 @@ def main() -> None:
             '--package-list',
             str(package_list),
             '--output-dir',
-            str(SIMPLE_DIR),
+            str(SITE_DIR),
             '--packages-url',
             '../../packages/',
         ],
         check=True,
     )
-
-    root_simple = os.environ.get('GITHUB_PAGES_URL', '').rstrip('/') + '/simple/'
-    with open(SITE_DIR / 'index.html', 'w') as f:
-        f.write(f"""<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SimulAVR Python package registry</title>
-</head>
-<body>
-    <h1>SimulAVR Python package registry</h1>
-    <p>This site hosts wheels and source distributions for this repository.</p>
-    <p>Use it with pip like this:</p>
-    <pre>python -m pip install --index-url {root_simple} PACKAGE_NAME</pre>
-    <p>Browse available packages <a href="simple/">here</a>.</p>
-</body>
-""")
 
 if __name__ == '__main__':
     main()
