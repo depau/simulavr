@@ -6,4 +6,9 @@ build/
 include/config.h
 # no *.pyc files
 *.pyc
+# ignore python builds
+dist/
+# ignore python venv
+.venv/
+venv/
 # EOF
