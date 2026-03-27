@@ -30,16 +30,3 @@ cmake.build-type = "Release"
 cmake.version = ">=3.18"
 wheel.packages = []   # no pure-Python source tree; files installed by CMake
 
-
-[tool.cibuildwheel]
-build = "cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
-
-[tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"]
-
-[tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
-
-[tool.cibuildwheel.windows]
-archs = ["AMD64", "x86"]
-
