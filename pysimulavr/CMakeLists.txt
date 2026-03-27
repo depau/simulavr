@@ -1,24 +1,28 @@
-# build _pysimulavr.so
-# https://bloerg.net/2012/11/10/cmake-and-distutils.html
+cmake_policy(SET CMP0078 NEW)
+cmake_policy(SET CMP0086 NEW)
 
-set(setup_py ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
-set(pysimulavr_i ${CMAKE_CURRENT_BINARY_DIR}/pysimulavr.i)
-set(pysimulavr_output ${CMAKE_CURRENT_BINARY_DIR}/timestamp)
+find_package(SWIG REQUIRED)
+include(UseSWIG)
 
-set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${setup_py})
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pysimulavr.i.in ${pysimulavr_i} COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pysimulationmember.h pysimulationmember.h COPYONLY)
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
-add_custom_command(OUTPUT ${pysimulavr_output}
-                   COMMAND rm -rf *.so build
-                   COMMAND ${PYTHON_EXECUTABLE} ${setup_py} build_ext
-                   COMMAND ln -s build/lib*/*.so
-                   COMMAND ${CMAKE_COMMAND} -E touch ${pysimulavr_output}
-                   DEPENDS ${pysimulavr_i} ${setup_py} ${setup_cfg} $<TARGET_FILE:sim_static>)
+set_property(SOURCE pysimulavr.i PROPERTY CPLUSPLUS ON)
+set_property(SOURCE pysimulavr.i PROPERTY INCLUDE_DIRECTORIES
+  "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_custom_target(pysimulavr DEPENDS ${pysimulavr_output})
+# Target name matches the SWIG %module name so UseSWIG passes -module pysimulavr,
+# producing _pysimulavr.so with single-underscore imports (no Python name-mangling issues).
+swig_add_library(pysimulavr TYPE MODULE LANGUAGE python SOURCES pysimulavr.i)
 
-add_custom_target(target ALL DEPENDS pysimulavr)
+target_include_directories(pysimulavr PRIVATE
+  "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/include/elfio"
+  "${CMAKE_CURRENT_SOURCE_DIR}")
+
+target_link_libraries(pysimulavr PRIVATE sim_static Python::Module)
+
+install(TARGETS pysimulavr DESTINATION .)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pysimulavr.py" DESTINATION .)
 
 # EOF
