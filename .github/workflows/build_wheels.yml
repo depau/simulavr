@@ -12,7 +12,7 @@ on:
 
 jobs:
   build_wheels:
-    name: Wheels / ${{ matrix.os }}
+    name: Wheels / ${{ matrix.os }}${{ matrix.archs && format(' ({0})', matrix.archs) || '' }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.event.inputs.skip_build != 'true' }}
     strategy:
@@ -32,8 +32,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.4
-        with:
-          archs: ${{ matrix.archs }}
+        env:
+          CIBW_ARCHS_WINDOWS: ${{ matrix.archs }}
 
       - uses: actions/upload-artifact@v6
         with:
