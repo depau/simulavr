@@ -22,7 +22,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.4
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
@@ -43,7 +43,7 @@ jobs:
 
       - run: python -m build --sdist
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -61,21 +61,21 @@ jobs:
 
       - name: Configure GitHub Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
       - name: Download wheels
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           pattern: 'wheels-*'
           path: dist
           merge-multiple: true
 
       - name: Download sdist
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: sdist
           path: dist
