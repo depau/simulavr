@@ -18,7 +18,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-11-arm, macos-15-intel, macos-latest]
+        include:
+          - os: windows-latest
+            archs: AMD64
+          - os: windows-latest
+            archs: x86
 
     steps:
       - uses: actions/checkout@v5
@@ -27,10 +32,12 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.4
+        with:
+          archs: ${{ matrix.archs }}
 
       - uses: actions/upload-artifact@v6
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.os }}-${{ matrix.archs || 'auto' }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -127,7 +134,7 @@ jobs:
 
       - name: Configure GitHub Pages
         id: pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@v5
 
       - uses: actions/setup-python@v6
         with:
