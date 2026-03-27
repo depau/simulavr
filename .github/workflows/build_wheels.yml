@@ -52,56 +52,70 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  release:
-    name: Create GitHub Release
+  publish_pages:
+    name: Build package index for GitHub Pages
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     permissions:
-      contents: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
-      - uses: actions/download-artifact@v5
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - uses: actions/setup-python@v6
         with:
-          pattern: "wheels-*"
+          python-version: '3.x'
+
+      - name: Download wheels
+        uses: actions/download-artifact@v5
+        with:
+          pattern: 'wheels-*'
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@v5
+      - name: Download sdist
+        uses: actions/download-artifact@v5
         with:
           name: sdist
           path: dist
 
-      - name: Determine version and tag
-        id: ver
+      - name: Install tooling
         shell: bash
         run: |
-          whl=$(ls dist/pysimulavr-*.whl | head -1)
-          version=$(python3 -c "
-          import re, sys
-          print(re.match(r'.*/pysimulavr-([^-]+)-', sys.argv[1]).group(1))
-          " "$whl")
-          # Replace + (PEP 440 local separator) with - so the tag is URL-safe
-          tag="python/v${version/+/-}"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          python -m pip install --upgrade pip dumb-pypi packaging
 
-      - name: Create and push tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "${{ steps.ver.outputs.tag }}"
-          git push origin "${{ steps.ver.outputs.tag }}"
-
-      - name: Create GitHub release
+      - name: Build Pages site
+        shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_PAGES_URL: ${{ steps.pages.outputs.base_url }}
         run: |
-          gh release create "${{ steps.ver.outputs.tag }}" \
-            --title "Python package v${{ steps.ver.outputs.version }}" \
-            --notes "Python wheels for pysimulavr ${{ steps.ver.outputs.version }}" \
-            dist/*
+          set -euo pipefail
+          python 'scripts/build_index.py'
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy_pages:
+    name: Deploy GitHub Pages
+    needs: publish_pages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
 
