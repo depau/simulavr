@@ -9,6 +9,8 @@ BUILD_PATH=@BUILD_PATH@
 BASE_PATH=@BASE_PATH@
 PYTHON_VERSION=@PYTHON_VERSION@
 PYTHON_MAJOR_VERSION=@PYTHON_MAJOR_VERSION@
+PYTHON_EXECUTABLE=@PYTHON_EXECUTABLE@
+SOURCE_PATH=@CMAKE_SOURCE_DIR@
 
 # package name and filename
 PACKAGE_NAME="$1"
@@ -103,28 +105,24 @@ function make_vpi_structure() {
 }
 
 function make_python_structure() {
-  if [ "${PYTHON_MAJOR_VERSION}" = "3" ]; then
-    PYTHON_VERSION_NAME=python${PYTHON_MAJOR_VERSION}
-  else
-    PYTHON_VERSION_NAME=python${PYTHON_VERSION}
-  fi
-  PYTHON_MODULE_PATH=${BASE_PATH}/lib/${PYTHON_VERSION_NAME}/dist-packages
-  
+  PYTHON_MODULE_PATH=${BASE_PATH}/lib/python3/dist-packages
+
   # create directory structure
   mkdir ${PACKAGE_NAME}
-  pushd ${PACKAGE_NAME}
-  mkdir -p ${PYTHON_MODULE_PATH}
-  chmod -R g-w ${BASE_PATH}
-  popd
+  mkdir -p ${PACKAGE_NAME}/${PYTHON_MODULE_PATH}
+  chmod -R g-w ${PACKAGE_NAME}/${BASE_PATH}
 
-  # copy files
-  pushd ${PACKAGE_NAME}
-  cp ${BUILD_PATH}/../pysimulavr/build/lib*/* ${PYTHON_MODULE_PATH}
-  test -f ${BUILD_PATH}/../pysimulavr/pysimulavr.py && cp ${BUILD_PATH}/../pysimulavr/pysimulavr.py ${PYTHON_MODULE_PATH}
-  strip ${PYTHON_MODULE_PATH}/*.so
-  chmod 644 ${PYTHON_MODULE_PATH}/*
+  # build wheel and install into staging directory
+  WHEEL_DIR=$(mktemp -d)
+  ${PYTHON_EXECUTABLE} -m pip wheel --no-deps --wheel-dir "${WHEEL_DIR}" "${SOURCE_PATH}"
+  ${PYTHON_EXECUTABLE} -m pip install --no-deps --no-index \
+    --find-links="${WHEEL_DIR}" \
+    --target="${PACKAGE_NAME}/${PYTHON_MODULE_PATH}" \
+    pysimulavr
+  rm -rf "${PACKAGE_NAME}/${PYTHON_MODULE_PATH}"/pysimulavr-*.dist-info "${WHEEL_DIR}"
+  strip "${PACKAGE_NAME}/${PYTHON_MODULE_PATH}"/_pysimulavr*.so
+  chmod 644 "${PACKAGE_NAME}/${PYTHON_MODULE_PATH}"/*
   copy_doc_structure ${PACKAGE_NAME}
-  popd
 
   # create control files
   pushd ${PACKAGE_NAME}

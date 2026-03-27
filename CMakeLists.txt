@@ -121,7 +121,7 @@ else()
     add_subdirectory(debian)
     add_custom_target(predebian COMMENT "install files before build debian packages")
     add_custom_command(TARGET predebian POST_BUILD
-                       COMMAND ${CMAKE_COMMAND} --build . --target progdoc --config $<CONFIGURATION>
-                       COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIGURATION>)
+                       COMMAND ${CMAKE_COMMAND} --build . --target progdoc
+                       COMMAND ${CMAKE_COMMAND} --build . --target install)
   endif()
 endif()

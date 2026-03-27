@@ -2,6 +2,6 @@
 set -e
 IPATH=/@PYTHON_MODULE_PATH@
 test "$1" != "remove" && exit 0
-rm -f ${IPATH}/pysimulavr.pyc ${IPATH}/pysimulavr.pyo
+find "${IPATH}" -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
 exit 0
 # EOF
